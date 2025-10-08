@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Paris Pro - Stratégie Moins de Perte/Plus de Profit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #34495e;
+            border-bottom: 1px solid #2c3e50;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .start-session-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .results-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #3498db;
+            margin-top: 20px;
+        }
+
+        .results-title {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .result-value {
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .mises-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .mise-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .mise-number {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .mise-value {
+            font-weight: 700;
+            color: #e67e22;
+        }
+
+        /* Styles pour la session en cours */
+        .session-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #e67e22;
+            margin-bottom: 20px;
+        }
+
+        .current-bet {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 3px solid #3498db;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .bet-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #e74c3c;
+            margin: 10px 0;
+        }
+
+        .bet-number {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        .bet-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .win-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .lose-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .session-history {
+            margin-top: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-win {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .history-lose {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        /* Styles pour les statistiques */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .stat-positive { color: #27ae60; }
+        .stat-negative { color: #e74c3c; }
+        .stat-neutral { color: #3498db; }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .session-history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: 600;
+        }
+
+        .kelly-result {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+
+        .risk-indicator {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .risk-low { background: #d5f4e6; color: #27ae60; border: 2px solid #27ae60; }
+        .risk-medium { background: #fff3cd; color: #f39c12; border: 2px solid #f39c12; }
+        .risk-high { background: #fdeaea; color: #e74c3c; border: 2px solid #e74c3c; }
+
+        .auto-calc-info {
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        /* Animation de félicitations */
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .celebration-card {
+            background: linear-gradient(135deg, #ffd700, #ff6b6b, #4ecdc4, #45b7d1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            animation: bounceIn 1s ease-out, glow 2s infinite alternate;
+            box-shadow: 0 0 50px rgba(255,215,0,0.5);
+            max-width: 90%;
+        }
+
+        .celebration-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        .celebration-message {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .celebration-stats {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            animation: confettiFall 5s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+            to { box-shadow: 0 0 40px rgba(255,215,0,0.8); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes confettiFall {
+            0% { 
+                transform: translateY(-100px) rotate(0deg); 
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(1000px) rotate(720deg); 
+                opacity: 0;
+            }
+        }
+
+        .strategy-explanation {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .strategy-explanation h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #7f8c8d;
+            font-size: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .bet-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .mises-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .celebration-title {
+                font-size: 1.8em;
+            }
+            
+            .celebration-message {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Calculateur de Paris PRO</h1>
+            <p>Stratégie Moins de Perte/Plus de Profit + Kelly Criterion + Analytics</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('strategie')">📊 Stratégie</button>
+            <button class="tab" onclick="switchTab('session')">🎲 Session</button>
+            <button class="tab" onclick="switchTab('statistiques')">📈 Statistiques</button>
+            <button class="tab" onclick="switchTab('kelly')">🎯 Kelly Criterion</button>
+        </div>
+
+        <!-- TAB STRATÉGIE -->
+        <div id="strategie" class="tab-content active">
+            <div class="auto-calc-info">
+                🔄 Les calculs se mettent à jour automatiquement quand vous modifiez les valeurs
+            </div>
+
+            <div class="strategy-explanation">
+                <h3>🎯 Stratégie Moins de Perte/Plus de Profit</h3>
+                <p>Objectif : Maximiser les profits tout en minimisant les pertes grâce à une progression contrôlée</p>
+            </div>
+
+            <div class="input-group">
+                <label for="capital">💰 Capital initial (gourdes):</label>
+                <input type="number" id="capital" value="5000" min="1" step="100" oninput="calculateAuto()">
+            </div>
+
+            <div class="input-group">
+                <label for="profitPercent">📈 Profit souhaité (%):</label>
+                <input type="number" id="profitPercent" value="20" min="1" max="100" step="1" oninput="calculateAuto()">
+            </div>
+
+            <div class="input-group">
+                <label for="m">🎯 Nombre de paris par session (m):</label>
+                <input type="number" id="m" value="5" min="1" max="15" step="1" oninput="calculateAuto()">
+            </div>
+
+            <div class="input-group">
+                <label for="cote">⚡ Côte:</label>
+                <input type="number" id="cote" value="2" min="1.1" max="10" step="0.1" oninput="calculateAuto()">
+            </div>
+
+            <button class="start-session-btn" onclick="startSession()" id="startSessionBtn" style="display: none;">
+                🚀 Démarrer une session
+            </button>
+
+            <div id="resultsSection">
+                <!-- Résultats apparaîtront ici automatiquement -->
+            </div>
+        </div>
+
+        <!-- Les autres onglets restent identiques -->
+        <!-- TAB SESSION -->
+        <div id="session" class="tab-content">
+            <div id="sessionSection">
+                <!-- Session en cours apparaîtra ici -->
+            </div>
+        </div>
+
+        <!-- TAB STATISTIQUES -->
+        <div id="statistiques" class="tab-content">
+            <div class="stats-grid" id="advancedStats">
+                <!-- Statistiques avancées -->
+            </div>
+
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+
+            <div style="text-align: center;">
+                <button class="export-btn" onclick="exportData()">📤 Exporter les données</button>
+                <button class="export-btn" onclick="clearHistory()">🗑️ Effacer l'historique</button>
+            </div>
+
+            <div class="session-history-list" id="sessionsHistory">
+                <!-- Historique des sessions -->
+            </div>
+        </div>
+
+        <!-- TAB KELLY -->
+        <div id="kelly" class="tab-content">
+            <div class="input-group">
+                <label for="kellyProb">🎲 Probabilité de gain estimée (%):</label>
+                <input type="number" id="kellyProb" value="55" min="1" max="99" step="1" oninput="calculateKelly()">
+            </div>
+
+            <div class="input-group">
+                <label for="kellyCote">⚡ Côte du pari:</label>
+                <input type="number" id="kellyCote" value="2.0" min="1.1" max="20" step="0.1" oninput="calculateKelly()">
+            </div>
+
+            <div class="input-group">
+                <label for="kellyBankroll">💰 Bankroll (gourdes):</label>
+                <input type="number" id="kellyBankroll" value="5000" min="1" step="100" oninput="calculateKelly()">
+            </div>
+
+            <div id="kellyResults">
+                <!-- Résultats Kelly -->
+            </div>
+
+            <div class="kelly-result">
+                <h3>📚 Explication Kelly Criterion</h3>
+                <p><strong>Formule :</strong> f = (p × b - q) / b</p>
+                <p>• f = Fraction optimale à miser</p>
+                <p>• p = Probabilité de gain</p>
+                <p>• q = Probabilité de perte (1-p)</p>
+                <p>• b = Côte - 1</p>
+                <p><em>Kelly full (100%) maximise la croissance mais est risqué. Kelly half (50%) est plus conservateur.</em></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            ⚠️ Attention: Les paris comportent des risques. Utilisez ces calculs à titre informatif.
+        </div>
+    </div>
+
+    <!-- Overlay de félicitations -->
+    <div class="celebration-overlay" id="celebrationOverlay">
+        <div class="celebration-card">
+            <div class="celebration-title">🎉 FÉLICITATIONS ! 🎉</div>
+            <div class="celebration-message" id="celebrationMessage">
+                Vous avez atteint votre objectif de profit !
+            </div>
+            <div class="celebration-stats" id="celebrationStats">
+                <!-- Les stats de réussite apparaîtront ici -->
+            </div>
+            <button class="calculate-btn" onclick="closeCelebration()" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                🚀 Continuer vers de nouveaux sommets !
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentSession = null;
+        let currentCapital = 0;
+        let sessionsHistory = JSON.parse(localStorage.getItem('sessionsHistory')) || [];
+        let performanceChart = null;
+        let profitCible = 0;
+        let capitalInitial = 0;
+
+        // NOUVELLE FONCTION : Animation de félicitations
+        function showCelebration() {
+            const overlay = document.getElementById('celebrationOverlay');
+            const message = document.getElementById('celebrationMessage');
+            const stats = document.getElementById('celebrationStats');
+            
+            const profitRealise = currentCapital - capitalInitial;
+            const sessionsUtilisees = sessionsHistory.length;
+            const winRate = sessionsHistory.filter(s => s.profit > 0).length / sessionsUtilisees * 100;
+            
+            message.innerHTML = `
+                <div>🎯 Objectif atteint avec succès !</div>
+                <div style="font-size: 0.9em; margin-top: 10px;">Votre stratégie "Moins de Perte/Plus de Profit" a porté ses fruits</div>
+            `;
+            
+            stats.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>Profit réalisé:<br><strong>${profitRealise.toFixed(2)} gourdes</strong></div>
+                    <div>Sessions:<br><strong>${sessionsUtilisees}</strong></div>
+                    <div>Win Rate:<br><strong>${winRate.toFixed(1)}%</strong></div>
+                    <div>Nouveau capital:<br><strong>${currentCapital.toFixed(2)} gourdes</strong></div>
+                </div>
+            `;
+            
+            // Créer des confettis
+            createConfetti();
+            
+            overlay.style.display = 'flex';
+        }
+
+        function createConfetti() {
+            const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+            const overlay = document.getElementById('celebrationOverlay');
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 5 + 's';
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                overlay.appendChild(confetti);
+            }
+        }
+
+        function closeCelebration() {
+            const overlay = document.getElementById('celebrationOverlay');
+            overlay.style.display = 'none';
+            
+            // Nettoyer les confettis
+            const confettis = document.querySelectorAll('.confetti');
+            confettis.forEach(confetti => confetti.remove());
+        }
+
+        // NOUVELLE FONCTION : Vérifier si l'objectif est atteint
+        function checkGoalAchieved() {
+            if (capitalInitial > 0 && currentCapital >= capitalInitial + profitCible) {
+                setTimeout(showCelebration, 1000); // Délai pour laisser voir le message de session
+            }
+        }
+
+        // FONCTION CALCUL AUTOMATIQUE
+        function calculateAuto() {
+            // Récupération des valeurs
+            const capital = parseFloat(document.getElementById('capital').value);
+            const profitPercent = parseFloat(document.getElementById('profitPercent').value);
+            const m = parseInt(document.getElementById('m').value);
+            const cote = parseFloat(document.getElementById('cote').value);
+
+            // Validation basique
+            if (!capital || !profitPercent || !m || !cote) {
+                return;
+            }
+
+            currentCapital = capital;
+            capitalInitial = capital;
+            profitCible = capital * (profitPercent / 100);
+
+            // Calculs principaux
+            const capitalCible = capital + profitCible;
+            const bankrollNecessaire = Math.pow(2, m) - 1;
+            const profitParSession = capital / bankrollNecessaire;
+            const facteurCroissance = 1 + (1 / bankrollNecessaire);
+            
+            // CALCUL AUTOMATIQUE DES SESSIONS NÉCESSAIRES
+            const n = Math.log(capitalCible / capital) / Math.log(facteurCroissance);
+            const sessionsNecessaires = Math.ceil(n);
+
+            // Calcul des mises
+            const mises = calculateMises(profitParSession, m, cote);
+            const bankrollTotale = mises.reduce((sum, mise) => sum + mise, 0);
+
+            // Calcul du risque
+            const probaPerteSession = 1 / Math.pow(2, m);
+            const risqueRune = (1 - Math.pow(1 - probaPerteSession, sessionsNecessaires)) * 100;
+
+            // Sauvegarde de la session
+            currentSession = {
+                mises: mises,
+                currentBetIndex: 0,
+                capital: capital,
+                profitParSession: profitParSession,
+                history: []
+            };
+
+            // Affichage des résultats
+            displayResults(
+                capital,
+                profitCible,
+                profitParSession,
+                sessionsNecessaires,
+                bankrollTotale,
+                risqueRune,
+                mises
+            );
+
+            // Afficher le bouton démarrer session
+            document.getElementById('startSessionBtn').style.display = 'block';
+            
+            // Vérifier si l'objectif est déjà atteint
+            checkGoalAchieved();
+        }
+
+        // [Le reste du code reste identique...]
+        function calculateMises(profitParSession, m, cote) {
+            const mises = [];
+            let miseActuelle = profitParSession;
+
+            for (let i = 1; i <= m; i++) {
+                mises.push(miseActuelle);
+                
+                if (cote === 2) {
+                    miseActuelle *= 2;
+                } else {
+                    const pertesAvant = mises.slice(0, -1).reduce((sum, mise) => sum + mise, 0);
+                    miseActuelle = (profitParSession + pertesAvant) / (cote - 1);
+                }
+            }
+
+            return mises;
+        }
+
+        function displayResults(capital, profitTotal, profitParSession, sessionsNecessaires, bankrollTotale, risqueRune, mises) {
+            let riskClass, riskText;
+
+            if (risqueRune < 10) {
+                riskClass = 'risk-low';
+                riskText = '✅ Risque faible';
+            } else if (risqueRune < 25) {
+                riskClass = 'risk-medium';
+                riskText = '⚠️ Risque modéré';
+            } else {
+                riskClass = 'risk-high';
+                riskText = '🚨 Risque élevé';
+            }
+
+            const resultsHTML = `
+                <div class="results-card">
+                    <div class="results-title">📊 RÉSULTATS DE LA STRATÉGIE</div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">Capital initial:</span>
+                        <span class="result-value">${capital.toFixed(2)} gourdes</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">Profit cible:</span>
+                        <span class="result-value">${profitTotal.toFixed(2)} gourdes</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">Profit par session:</span>
+                        <span class="result-value">${profitParSession.toFixed(2)} gourdes</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">Sessions nécessaires:</span>
+                        <span class="result-value">${sessionsNecessaires}</span>
+                        <small style="color: #7f8c8d;">(calculé automatiquement)</small>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">Bankroll nécessaire:</span>
+                        <span class="result-value">${bankrollTotale.toFixed(2)} gourdes</span>
+                    </div>
+
+                    <div class="risk-indicator ${riskClass}">
+                        ${riskText}<br>Probabilité de ruine: ${risqueRune.toFixed(1)}%
+                    </div>
+                </div>
+
+                <div class="results-card">
+                    <div class="results-title">💰 MISES PROGRESSIVES</div>
+                    <div class="mises-grid" id="misesGrid">
+                        ${mises.map((mise, index) => `
+                            <div class="mise-item">
+                                <div class="mise-number">Pari ${index + 1}</div>
+                                <div class="mise-value">${mise.toFixed(2)} gourdes</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="text-align: center; margin-top: 10px; color: #7f8c8d; font-size: 14px;">
+                        💡 La session s'arrête au premier gain - Stratégie "Moins de Perte/Plus de Profit"
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('resultsSection').innerHTML = resultsHTML;
+        }
+
+        function startSession() {
+            if (!currentSession) {
+                alert('Veuillez d\'abord calculer la stratégie');
+                return;
+            }
+
+            // Réinitialiser la session
+            currentSession.currentBetIndex = 0;
+            currentSession.history = [];
+            currentSession.capital = currentCapital;
+
+            // Afficher la section session
+            document.getElementById('sessionSection').innerHTML = `
+                <div class="session-card">
+                    <div class="session-title">🎲 SESSION EN COURS - Stratégie Moins de Perte/Plus de Profit</div>
+                    
+                    <div class="current-bet">
+                        <div class="bet-number">Pari #<span id="currentBetNumber">1</span>/<span id="totalBets">${currentSession.mises.length}</span></div>
+                        <div class="bet-amount" id="currentBetAmount">${currentSession.mises[0].toFixed(2)} gourdes</div>
+                        <div>Mise actuelle</div>
+                    </div>
+
+                    <div class="bet-buttons">
+                        <button class="win-btn" onclick="recordResult('win')">
+                            ✅ Gain (+<span id="potentialWin">${(currentSession.mises[0] * (parseFloat(document.getElementById('cote').value) - 1)).toFixed(2)}</span> gourdes)
+                        </button>
+                        <button class="lose-btn" onclick="recordResult('lose')">
+                            ❌ Perte
+                        </button>
+                    </div>
+
+                    <div class="session-history">
+                        <div style="font-weight: 600; margin-bottom: 10px;">Historique de la session:</div>
+                        <div id="sessionHistory" style="color: #7f8c8d; text-align: center;">Aucun pari effectué</div>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">Capital actuel:</span>
+                        <span class="result-value" id="currentCapital">${currentSession.capital.toFixed(2)} gourdes</span>
+                    </div>
+                </div>
+            `;
+
+            // Aller à l'onglet session
+            switchTab('session');
+        }
+
+        function recordResult(result) {
+            const betIndex = currentSession.currentBetIndex;
+            const currentMise = currentSession.mises[betIndex];
+            const cote = parseFloat(document.getElementById('cote').value);
+
+            // Enregistrer le résultat
+            currentSession.history.push({
+                mise: currentMise,
+                result: result
+            });
+
+            if (result === 'win') {
+                // Gain : capital augmente du profit
+                const gain = currentMise * (cote - 1);
+                currentSession.capital += gain;
+                currentCapital = currentSession.capital;
+
+                // Sauvegarder la session dans l'historique
+                saveSessionToHistory(gain, currentSession.mises, currentSession.capital - gain);
+
+                // Session terminée (gain)
+                endSession(true, gain);
+            } else {
+                // Perte : passer au pari suivant
+                currentSession.currentBetIndex++;
+
+                if (currentSession.currentBetIndex >= currentSession.mises.length) {
+                    // Session perdue (tous les paris perdus)
+                    const perteTotale = currentSession.mises.reduce((sum, mise) => sum + mise, 0);
+                    saveSessionToHistory(-perteTotale, currentSession.mises, currentSession.capital + perteTotale);
+                    endSession(false, -perteTotale);
+                } else {
+                    // Mettre à jour l'affichage pour le prochain pari
+                    updateSessionDisplay();
+                }
+            }
+        }
+
+        function updateSessionDisplay() {
+            const betIndex = currentSession.currentBetIndex;
+            const currentMise = currentSession.mises[betIndex];
+            const potentialWin = currentMise * (parseFloat(document.getElementById('cote').value) - 1);
+
+            document.getElementById('currentBetNumber').textContent = betIndex + 1;
+            document.getElementById('currentBetAmount').textContent = currentMise.toFixed(2) + ' gourdes';
+            document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
+            document.getElementById('currentCapital').textContent = currentSession.capital.toFixed(2) + ' gourdes';
+
+            // Afficher l'historique
+            const historyElement = document.getElementById('sessionHistory');
+            historyElement.innerHTML = '';
+
+            currentSession.history.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <span>Pari ${index + 1}: ${item.mise.toFixed(2)} gourdes</span>
+                    <span class="${item.result === 'win' ? 'history-win' : 'history-lose'}">
+                        ${item.result === 'win' ? '✅ Gagné' : '❌ Perdu'}
+                    </span>
+                `;
+                historyElement.appendChild(historyItem);
+            });
+
+            if (currentSession.history.length === 0) {
+                historyElement.innerHTML = '<div style="color: #7f8c8d; text-align: center;">Aucun pari effectué</div>';
+            }
+        }
+
+        function endSession(isWin, profit) {
+            let message = '';
+            
+            if (isWin) {
+                message = `🎉 Session GAGNÉE! Profit: ${profit.toFixed(2)} gourdes\nNouveau capital: ${currentSession.capital.toFixed(2)} gourdes`;
+            } else {
+                message = `💥 Session PERDUE! Perte: ${Math.abs(profit).toFixed(2)} gourdes\nCapital restant: ${currentSession.capital.toFixed(2)} gourdes`;
+            }
+
+            alert(message);
+
+            // Mettre à jour le capital dans le formulaire
+            document.getElementById('capital').value = currentSession.capital.toFixed(2);
+            
+            // Recalculer automatiquement avec le nouveau capital
+            calculateAuto();
+
+            // Vérifier si l'objectif est atteint
+            checkGoalAchieved();
+
+            // Revenir à l'onglet stratégie
+            switchTab('strategie');
+        }
+
+        // [Les autres fonctions restent identiques...]
+        // Système d'onglets
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'statistiques') {
+                updateStatistics();
+            }
+        }
+
+        // KELLY CRITERION
+        function calculateKelly() {
+            const prob = parseFloat(document.getElementById('kellyProb').value) / 100;
+            const cote = parseFloat(document.getElementById('kellyCote').value);
+            const bankroll = parseFloat(document.getElementById('kellyBankroll').value);
+            
+            const b = cote - 1;
+            const q = 1 - prob;
+            const kellyFull = (prob * b - q) / b;
+            const kellyFraction = Math.max(0, kellyFull);
+            
+            const miseFull = bankroll * kellyFraction;
+            const miseHalf = bankroll * (kellyFraction * 0.5);
+            const miseQuarter = bankroll * (kellyFraction * 0.25);
+
+            let conseil = "";
+            if (kellyFraction <= 0) {
+                conseil = "❌ Ne pas parier - Espérance négative";
+            } else if (kellyFraction <= 0.02) {
+                conseil = "✅ Pari très conservateur";
+            } else if (kellyFraction <= 0.05) {
+                conseil = "✅ Pari modéré";
+            } else if (kellyFraction <= 0.1) {
+                conseil = "⚠️ Pari agressif";
+            } else {
+                conseil = "🚨 Pari très risqué - Considérer une fraction réduite";
+            }
+
+            const results = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>Fraction Kelly</div>
+                        <div class="stat-value stat-neutral">${(kellyFraction * 100).toFixed(1)}%</div>
+                        <div>Optimum théorique</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Mise Full Kelly</div>
+                        <div class="stat-value ${kellyFraction > 0.1 ? 'stat-negative' : 'stat-positive'}">${miseFull.toFixed(2)} gourdes</div>
+                        <div>100% de Kelly</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Mise Half Kelly</div>
+                        <div class="stat-value stat-positive">${miseHalf.toFixed(2)} gourdes</div>
+                        <div>50% de Kelly</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Mise Quarter Kelly</div>
+                        <div class="stat-value stat-positive">${miseQuarter.toFixed(2)} gourdes</div>
+                        <div>25% de Kelly</div>
+                    </div>
+                </div>
+                <div class="risk-indicator ${kellyFraction > 0.1 ? 'risk-high' : kellyFraction > 0.05 ? 'risk-medium' : 'risk-low'}">
+                    ${conseil}
+                </div>
+            `;
+
+            document.getElementById('kellyResults').innerHTML = results;
+        }
+
+        // STATISTIQUES AVANCÉES
+        function calculateAdvancedStats() {
+            if (sessionsHistory.length === 0) {
+                return {
+                    totalSessions: 0,
+                    sessionsGagnees: 0,
+                    sessionsPerdues: 0,
+                    winRate: 0,
+                    profitTotal: 0,
+                    profitMoyen: 0,
+                    roi: 0,
+                    profitFactor: 0,
+                    drawdown: 0,
+                    sharpeRatio: 0,
+                    expectancy: 0
+                };
+            }
+
+            const gains = sessionsHistory.filter(s => s.profit > 0).map(s => s.profit);
+            const pertes = sessionsHistory.filter(s => s.profit < 0).map(s => Math.abs(s.profit));
+            const profits = sessionsHistory.map(s => s.profit);
+            
+            const totalSessions = sessionsHistory.length;
+            const sessionsGagnees = gains.length;
+            const sessionsPerdues = pertes.length;
+            const winRate = (sessionsGagnees / totalSessions) * 100;
+            const profitTotal = profits.reduce((a, b) => a + b, 0);
+            const profitMoyen = profitTotal / totalSessions;
+            
+            // ROI (Return on Investment)
+            const totalInvesti = sessionsHistory.reduce((sum, session) => 
+                sum + session.mises.reduce((a, b) => a + b, 0), 0);
+            const roi = totalInvesti > 0 ? (profitTotal / totalInvesti) * 100 : 0;
+            
+            // Profit Factor
+            const totalGains = gains.reduce((a, b) => a + b, 0);
+            const totalPertes = pertes.reduce((a, b) => a + b, 0);
+            const profitFactor = totalPertes > 0 ? totalGains / totalPertes : totalGains > 0 ? 999 : 0;
+            
+            // Drawdown
+            let capital = sessionsHistory[0].capitalAvant;
+            let peak = capital;
+            let maxDrawdown = 0;
+            
+            sessionsHistory.forEach(session => {
+                capital += session.profit;
+                if (capital > peak) peak = capital;
+                const drawdown = ((peak - capital) / peak) * 100;
+                if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+            });
+            
+            // Sharpe Ratio (simplifié)
+            const profitStd = standardDeviation(profits);
+            const sharpeRatio = profitStd > 0 ? (profitMoyen / profitStd) : 0;
+            
+            // Expectancy
+            const avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / gains.length : 0;
+            const avgPerte = pertes.length > 0 ? pertes.reduce((a, b) => a + b, 0) / pertes.length : 0;
+            const expectancy = (winRate/100 * avgGain) - ((100-winRate)/100 * avgPerte);
+
+            return {
+                totalSessions,
+                sessionsGagnees,
+                sessionsPerdues,
+                winRate,
+                profitTotal,
+                profitMoyen,
+                roi,
+                profitFactor,
+                drawdown: maxDrawdown,
+                sharpeRatio,
+                expectancy
+            };
+        }
+
+        function standardDeviation(arr) {
+            const n = arr.length;
+            const mean = arr.reduce((a, b) => a + b) / n;
+            return Math.sqrt(arr.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n);
+        }
+
+        function updateStatistics() {
+            const stats = calculateAdvancedStats();
+            
+            // Mettre à jour les statistiques
+            document.getElementById('advancedStats').innerHTML = `
+                <div class="stat-card">
+                    <div>Sessions Total</div>
+                    <div class="stat-value stat-neutral">${stats.totalSessions}</div>
+                    <div>Historique</div>
+                </div>
+                <div class="stat-card">
+                    <div>Win Rate</div>
+                    <div class="stat-value ${stats.winRate >= 50 ? 'stat-positive' : 'stat-negative'}">${stats.winRate.toFixed(1)}%</div>
+                    <div>Taux de réussite</div>
+                </div>
+                <div class="stat-card">
+                    <div>Profit Total</div>
+                    <div class="stat-value ${stats.profitTotal >= 0 ? 'stat-positive' : 'stat-negative'}">${stats.profitTotal.toFixed(2)} gourdes</div>
+                    <div>Gain/Perte total</div>
+                </div>
+                <div class="stat-card">
+                    <div>ROI</div>
+                    <div class="stat-value ${stats.roi >= 0 ? 'stat-positive' : 'stat-negative'}">${stats.roi.toFixed(1)}%</div>
+                    <div>Return on Investment</div>
+                </div>
+                <div class="stat-card">
+                    <div>Profit Factor</div>
+                    <div class="stat-value ${stats.profitFactor >= 1 ? 'stat-positive' : 'stat-negative'}">${stats.profitFactor.toFixed(2)}</div>
+                    <div>Gains/Pertes</div>
+                </div>
+                <div class="stat-card">
+                    <div>Expectancy</div>
+                    <div class="stat-value ${stats.expectancy >= 0 ? 'stat-positive' : 'stat-negative'}">${stats.expectancy.toFixed(2)}</div>
+                    <div>Gain moyen attendu</div>
+                </div>
+                <div class="stat-card">
+                    <div>Drawdown Max</div>
+                    <div class="stat-value ${stats.drawdown <= 10 ? 'stat-positive' : stats.drawdown <= 25 ? 'stat-neutral' : 'stat-negative'}">${stats.drawdown.toFixed(1)}%</div>
+                    <div>Pire baisse</div>
+                </div>
+                <div class="stat-card">
+                    <div>Sharpe Ratio</div>
+                    <div class="stat-value ${stats.sharpeRatio >= 1 ? 'stat-positive' : 'stat-neutral'}">${stats.sharpeRatio.toFixed(2)}</div>
+                    <div>Rentabilité/Risque</div>
+                </div>
+            `;
+
+            // Mettre à jour le graphique
+            updateChart();
+            
+            // Mettre à jour l'historique
+            updateSessionsHistory();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            const capitalEvolution = [sessionsHistory[0]?.capitalAvant || currentCapital];
+            let currentCap = capitalEvolution[0];
+            
+            sessionsHistory.forEach(session => {
+                currentCap += session.profit;
+                capitalEvolution.push(currentCap);
+            });
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Start', ...sessionsHistory.map((_, i) => `Session ${i+1}`)],
+                    datasets: [{
+                        label: 'Évolution du Capital',
+                        data: capitalEvolution,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Évolution de Votre Capital'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSessionsHistory() {
+            const historyElement = document.getElementById('sessionsHistory');
+            historyElement.innerHTML = '';
+
+            if (sessionsHistory.length === 0) {
+                historyElement.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">Aucune session enregistrée</div>';
+                return;
+            }
+
+            sessionsHistory.slice().reverse().forEach((session, index) => {
+                const sessionElement = document.createElement('div');
+                sessionElement.className = `history-item ${session.profit >= 0 ? 'history-win' : 'history-lose'}`;
+                sessionElement.innerHTML = `
+                    <div>
+                        <strong>Session ${sessionsHistory.length - index}</strong><br>
+                        <small>${new Date(session.timestamp).toLocaleDateString()}</small>
+                    </div>
+                    <div>
+                        <strong>${session.profit >= 0 ? '+' : ''}${session.profit.toFixed(2)} gourdes</strong><br>
+                        <small>${session.mises.length} paris</small>
+                    </div>
+                `;
+                historyElement.appendChild(sessionElement);
+            });
+        }
+
+        // SAUVEGARDE ET EXPORT
+        function saveSessionToHistory(profit, mises, capitalAvant) {
+            const session = {
+                timestamp: new Date().toISOString(),
+                profit: profit,
+                mises: mises,
+                capitalAvant: capitalAvant,
+                result: profit >= 0 ? 'win' : 'lose'
+            };
+            
+            sessionsHistory.push(session);
+            localStorage.setItem('sessionsHistory', JSON.stringify(sessionsHistory));
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(sessionsHistory, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `sessions-paris-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function clearHistory() {
+            if (confirm('Êtes-vous sûr de vouloir effacer tout l\'historique ?')) {
+                sessionsHistory = [];
+                localStorage.removeItem('sessionsHistory');
+                updateStatistics();
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateAuto(); // Calcul automatique au chargement
+            calculateKelly();
+            if (sessionsHistory.length > 0) {
+                updateStatistics();
+            }
+        });
+    </script>
+</body>
+</html>
